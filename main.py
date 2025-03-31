@@ -53,7 +53,7 @@ async def get_weather(city: str):
 
 async def start(update: Update, context: CallbackContext):
     logger.info("/start command received.")
-    await update.message.reply_text("Hello! 😊 I'm CareCast, your weather assistant. Just ask me about the weather in any city 🌍")
+    await update.message.reply_text("Hey there! 😊 I'm CareCast, your friendly weather assistant. Hope you're having a great day! Just ask me about the weather in any city 🌍")
 
 async def weather(update: Update, context: CallbackContext):
     user_id = update.message.chat_id
@@ -78,19 +78,20 @@ async def weather(update: Update, context: CallbackContext):
         weather_info = await get_weather(city)
         if weather_info:
             response = (
-                f"🌍 Weather update for {city}:\n"
+                f"☀️ Hey there! Here's the latest weather update for {city}:
+"
                 f"🌡 Temperature: {weather_info['temperature']}°C\n"
                 f"💧 Humidity: {weather_info['humidity']}%\n"
                 f"🌬 Wind Speed: {weather_info['wind_speed']} km/h\n"
                 f"☁️ Condition: {weather_info['condition']}\n\n"
-                "Stay safe and take care! 💙"
+                "Take care, stay hydrated, and have an amazing day ahead! 💙"
             )
             await update.message.reply_text(response)
-            await update.message.reply_text(f"Would you like to hear a fun fact about {city}? 😊 (Yes/No)")
+            await update.message.reply_text(f"Hey, want to hear a cool fact about {city}? 😊 Just say 'Yes' or 'No'!")
         else:
-            await update.message.reply_text(f"Oops! 😕 I couldn't fetch the weather for {city}. Check API settings and try again! 💙")
+            await update.message.reply_text(f"Oh no! 😕 I couldn't fetch the weather for {city}. Maybe try another city? I'm here to help! 💙")
     else:
-        await update.message.reply_text("I couldn't detect the city name. Try: 'What's the weather in Chennai?' 😊")
+        await update.message.reply_text("Oops! I couldn't catch the city name. Try something like: 'What's the weather like in Mumbai?' 😊")
 
 async def fun_fact_response(update: Update, context: CallbackContext):
     user_id = update.message.chat_id
@@ -98,11 +99,11 @@ async def fun_fact_response(update: Update, context: CallbackContext):
     await update.message.reply_text(f"Here's a fun fact about {city}! 🌍 Did you know...? (Feature coming soon) 💙")
 
 async def no_fun_fact(update: Update, context: CallbackContext):
-    await update.message.reply_text("Got it! If you need more weather updates, just ask. Stay safe! ☀️💙")
+    await update.message.reply_text("No worries! If you ever need a weather update, just ask! Stay awesome! ☀️💙")
 
 async def unknown(update: Update, context: CallbackContext):
     logger.info(f"Unknown command received: {update.message.text}")
-    await update.message.reply_text("I'm not sure I understood. I can provide today's weather updates—just ask! 🌍☀️")
+    await update.message.reply_text("Hmm... I didn't quite get that! But I'm here for weather updates—just ask! 🌍☀️")
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("start", start))
