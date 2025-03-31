@@ -59,7 +59,10 @@ async def weather(update: Update, context: CallbackContext):
 
     if "weather" in words and "in" in words:
         city_index = words.index("in") + 1
-        city = " ".join(words[city_index:]).title()  # Convert to title case for better readability
+        if city_index < len(words):  # Ensure there's a city name after "in"
+            city = " ".join(words[city_index:]).title()  # Convert to title case for better readability
+
+    logger.info(f"Extracted city: {city}")  # Debugging log
 
     if city:
         temp_data[user_id] = city  # Store city for follow-ups
