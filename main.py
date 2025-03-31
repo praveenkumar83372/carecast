@@ -1,6 +1,6 @@
 import logging
 import os
-import requests
+import aiohttp
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackContext
 
@@ -21,14 +21,18 @@ if not BOT_TOKEN:
 # Store user session data
 temp_data = {}
 
-def get_weather(city: str):
+async def get_weather(city: str):
     try:
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
         logger.info(f"Fetching weather data for: {city}")
 
-        response = requests.get(url)
-        response.raise_for_status()  # Raises an error if response is not 200
-        data = response.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status != 200:
+                    logger.error(f"API error {response.status}: {await response.text()}")
+                    return None
+                
+                data = await response.json()
 
         # Ensure API response is valid
         if "main" not in data or "weather" not in data:
@@ -42,7 +46,7 @@ def get_weather(city: str):
             "condition": data["weather"][0].get("description", "N/A").capitalize(),
         }
         return weather_info
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         logger.error(f"❌ Error fetching weather: {e}")
         return None
 
@@ -51,22 +55,21 @@ async def start(update: Update, context: CallbackContext):
 
 async def weather(update: Update, context: CallbackContext):
     user_id = update.message.chat_id
-    message_text = update.message.text.lower()  # Convert entire message to lowercase
+    message_text = update.message.text.lower()
 
-    # Extract city name (everything after "weather in")
     words = message_text.split()
     city = None
 
     if "weather" in words and "in" in words:
         city_index = words.index("in") + 1
-        if city_index < len(words):  # Ensure there's a city name after "in"
-            city = " ".join(words[city_index:]).title()  # Convert to title case for better readability
+        if city_index < len(words):
+            city = " ".join(words[city_index:]).title()
 
-    logger.info(f"Extracted city: {city}")  # Debugging log
+    logger.info(f"Extracted city: {city}")
 
     if city:
-        temp_data[user_id] = city  # Store city for follow-ups
-        weather_info = get_weather(city)
+        temp_data[user_id] = city
+        weather_info = await get_weather(city)
         if weather_info:
             response = (
                 f"🌍 Weather update for {city}:\n"
@@ -79,7 +82,7 @@ async def weather(update: Update, context: CallbackContext):
             await update.message.reply_text(response)
             await update.message.reply_text(f"Would you like to hear a fun fact about {city}? 😊 (Yes/No)")
         else:
-            await update.message.reply_text(f"Oops! 😕 I couldn't fetch the weather for {city}. Try another city or check your spelling. I'm here to help! 💙")
+            await update.message.reply_text(f"Oops! 😕 I couldn't fetch the weather for {city}. Check API settings and try again! 💙")
     else:
         await update.message.reply_text("I couldn't detect the city name. Try: 'What's the weather in Chennai?' 😊")
 
@@ -94,11 +97,16 @@ async def no_fun_fact(update: Update, context: CallbackContext):
 async def unknown(update: Update, context: CallbackContext):
     await update.message.reply_text("I'm not sure I understood. I can provide today's weather updates—just ask! 🌍☀️")
 
-# Build Telegram bot
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.Regex(r"(?i)^(weather in .+|what's the weather in .+|today's weather in .+)"), weather))
+app.add_handler(MessageHandler(filters.Regex(r"(?i)^(weather in .+|what's the weather in .+|today's weather in .+)",), weather))
 app.add_handler(MessageHandler(filters.Regex(r"(?i)^Yes$"), fun_fact_response))
+app.add_handler(MessageHandler(filters.Regex(r"(?i)^No$"), no_fun_fact))
+app.add_handler(MessageHandler(filters.ALL, unknown))
+
+logger.info("🚀 Bot is running...")
+app.run_polling()
+
 app.add_handler(MessageHandler(filters.Regex(r"(?i)^No$"), no_fun_fact))
 app.add_handler(MessageHandler(filters.ALL, unknown))
 
