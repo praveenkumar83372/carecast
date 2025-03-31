@@ -29,10 +29,12 @@ async def get_weather(city: str):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status != 200:
-                    logger.error(f"API error {response.status}: {await response.text()}")
+                    error_text = await response.text()
+                    logger.error(f"API error {response.status}: {error_text}")
                     return None
                 
                 data = await response.json()
+                logger.info(f"API Response: {data}")
 
         # Ensure API response is valid
         if "main" not in data or "weather" not in data:
@@ -51,6 +53,7 @@ async def get_weather(city: str):
         return None
 
 async def start(update: Update, context: CallbackContext):
+    logger.info("/start command received.")
     await update.message.reply_text("Hello! 😊 I'm CareCast, your weather assistant. Just ask me about the weather in any city 🌍")
 
 async def weather(update: Update, context: CallbackContext):
@@ -95,11 +98,12 @@ async def no_fun_fact(update: Update, context: CallbackContext):
     await update.message.reply_text("Got it! If you need more weather updates, just ask. Stay safe! ☀️💙")
 
 async def unknown(update: Update, context: CallbackContext):
+    logger.info(f"Unknown command received: {update.message.text}")
     await update.message.reply_text("I'm not sure I understood. I can provide today's weather updates—just ask! 🌍☀️")
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.Regex(r"(?i)^(weather in .+|what's the weather in .+|today's weather in .+)",), weather))
+app.add_handler(MessageHandler(filters.Regex(r"(?i)^(weather in .+|what's the weather in .+|today's weather in .+)"), weather))
 app.add_handler(MessageHandler(filters.Regex(r"(?i)^Yes$"), fun_fact_response))
 app.add_handler(MessageHandler(filters.Regex(r"(?i)^No$"), no_fun_fact))
 app.add_handler(MessageHandler(filters.ALL, unknown))
@@ -107,8 +111,3 @@ app.add_handler(MessageHandler(filters.ALL, unknown))
 logger.info("🚀 Bot is running...")
 app.run_polling()
 
-app.add_handler(MessageHandler(filters.Regex(r"(?i)^No$"), no_fun_fact))
-app.add_handler(MessageHandler(filters.ALL, unknown))
-
-logger.info("🚀 Bot is running...")
-app.run_polling()
