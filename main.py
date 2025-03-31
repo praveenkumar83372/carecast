@@ -36,7 +36,6 @@ async def get_weather(city: str):
                 data = await response.json()
                 logger.info(f"API Response: {data}")
 
-        # Ensure API response is valid
         if "main" not in data or "weather" not in data:
             logger.error(f"Invalid API response: {data}")
             return None
@@ -63,10 +62,14 @@ async def weather(update: Update, context: CallbackContext):
     words = message_text.split()
     city = None
 
-    if "weather" in words and "in" in words:
-        city_index = words.index("in") + 1
-        if city_index < len(words):
-            city = " ".join(words[city_index:]).title()
+    if "weather" in words:
+        prepositions = ["in", "for", "at", "of", "near", "around"]
+        for prep in prepositions:
+            if prep in words:
+                city_index = words.index(prep) + 1
+                if city_index < len(words):
+                    city = " ".join(words[city_index:]).title()
+                    break
 
     logger.info(f"Extracted city: {city}")
 
@@ -103,7 +106,7 @@ async def unknown(update: Update, context: CallbackContext):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.Regex(r"(?i)^(weather in .+|what's the weather in .+|today's weather in .+)"), weather))
+app.add_handler(MessageHandler(filters.Regex(r"(?i)^(.*weather.*(in|for|at|of|near|around) .+|what's the weather.*|today's weather.*|how's the weather.*|tell me the weather.*|give me the weather.*)$"), weather))
 app.add_handler(MessageHandler(filters.Regex(r"(?i)^Yes$"), fun_fact_response))
 app.add_handler(MessageHandler(filters.Regex(r"(?i)^No$"), no_fun_fact))
 app.add_handler(MessageHandler(filters.ALL, unknown))
