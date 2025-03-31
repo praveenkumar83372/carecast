@@ -53,7 +53,7 @@ async def get_weather(city: str):
 
 async def start(update: Update, context: CallbackContext):
     logger.info("/start command received.")
-    await update.message.reply_text("Hey there! 😊 I'm CareCast, your friendly weather assistant. Hope you're having a great day! Just ask me about the weather in any city 🌍")
+    await update.message.reply_text("Hey there! 😊 I'm CareCast, your friendly weather assistant. Hope you're having a fantastic day! Just ask me about the weather in any city 🌍")
 
 async def weather(update: Update, context: CallbackContext):
     user_id = update.message.chat_id
@@ -78,18 +78,17 @@ async def weather(update: Update, context: CallbackContext):
         weather_info = await get_weather(city)
         if weather_info:
             response = (
-                f"☀️ Hey there! Here's the latest weather update for {city}:
-"
+                f"☀️ Hey there! Here's the latest weather update for {city}:\n"
                 f"🌡 Temperature: {weather_info['temperature']}°C\n"
                 f"💧 Humidity: {weather_info['humidity']}%\n"
                 f"🌬 Wind Speed: {weather_info['wind_speed']} km/h\n"
                 f"☁️ Condition: {weather_info['condition']}\n\n"
-                "Take care, stay hydrated, and have an amazing day ahead! 💙"
+                "Remember to dress accordingly and stay comfortable! 💙 Let me know if you need more updates! 😊"
             )
             await update.message.reply_text(response)
-            await update.message.reply_text(f"Hey, want to hear a cool fact about {city}? 😊 Just say 'Yes' or 'No'!")
+            await update.message.reply_text(f"Hey, would you like to hear a cool fact about {city}? 😊 Just say 'Yes' or 'No'!")
         else:
-            await update.message.reply_text(f"Oh no! 😕 I couldn't fetch the weather for {city}. Maybe try another city? I'm here to help! 💙")
+            await update.message.reply_text(f"Oh no! 😕 I couldn't fetch the weather for {city}. Maybe try another city? I'm always here to help! 💙")
     else:
         await update.message.reply_text("Oops! I couldn't catch the city name. Try something like: 'What's the weather like in Mumbai?' 😊")
 
@@ -114,4 +113,3 @@ app.add_handler(MessageHandler(filters.ALL, unknown))
 
 logger.info("🚀 Bot is running...")
 app.run_polling()
-
